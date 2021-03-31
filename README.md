@@ -49,7 +49,7 @@ This project only have one dependency, the [NLTK](https://www.nltk.org/). And it
 $ pip3 install nltk
 ```
 
-After that, you can download the hole nltk library or download each one of them as the code complaim about it.
+After that, you can download all the content from nltk, or download by specific topics as the code asks.
 
 ```python
 # Downloading all
