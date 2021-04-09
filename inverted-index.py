@@ -37,6 +37,7 @@ print("Initializing constants...")
 FINAL_FILE_PATH = "indice.txt"
 SLASH = "/"
 NEW_LINE = "\n"
+PUNCTUATION = [".", "..", "...", ",", "!", "?", " "]
 STOP_WORDS = corpus.stopwords.words('portuguese')
 STEMMER = stem.RSLPStemmer()
 UNIGRAM_TAGGER = tag.UnigramTagger(corpus.mac_morpho.tagged_sents())
@@ -61,6 +62,7 @@ def getInputFilesPath(baseFilePath):
     except:
         return None
     else:
+        basePath = "." if basePath == "" else basePath
         return ["{}{}{}".format(basePath, SLASH, inputFile.replace(NEW_LINE, "")) for inputFile in baseFile.readlines()
                 if
                 inputFile != NEW_LINE]
@@ -73,11 +75,12 @@ def getFilePathWords(inputFilePath):
         print("Error on reading {}!".format(inputFilePath))
         return []
     return [word.lower() for word in tokenize.word_tokenize(inputFile.read(), language='portuguese') if
-            word.isalpha() and word not in STOP_WORDS]
+            word not in PUNCTUATION and word not in STOP_WORDS]
 
 
 def handleWords(wordList):
-    return [STEMMER.stem(word[0]) for word in UNIGRAM_TAGGER.tag(wordList) if word[1] not in ('PREP', 'ADV', 'ART')]
+    taggedWords = UNIGRAM_TAGGER.tag(wordList)
+    return [STEMMER.stem(word[0]) for word in taggedWords if word[1] not in ('PREP', 'KC', 'KS', 'ART')]
 
 
 def getWordOccurrencesCount(word, wordList):
