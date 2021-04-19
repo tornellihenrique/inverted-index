@@ -29,6 +29,7 @@ from nltk import tokenize
 from nltk import corpus
 from nltk import stem
 from nltk import tag
+import pickle
 
 ###################################################### CONSTANTS ######################################################
 
@@ -40,14 +41,23 @@ NEW_LINE = "\n"
 PUNCTUATION = [".", "..", "...", ",", "!", "?", " "]
 STOP_WORDS = corpus.stopwords.words('portuguese')
 STEMMER = stem.RSLPStemmer()
-UNIGRAM_TAGGER = tag.UnigramTagger(corpus.mac_morpho.tagged_sents())
+UNIGRAM_TAGGER = None
+UNIGRAM_TAGGER_BIN = "tagger.bin"
+
+try:
+    UNIGRAM_TAGGER = pickle.load(open(UNIGRAM_TAGGER_BIN, "rb"))
+except:
+    print("This can take a few moments...")
+    UNIGRAM_TAGGER = tag.UnigramTagger(corpus.mac_morpho.tagged_sents())
+    pickle.dump(UNIGRAM_TAGGER, open(UNIGRAM_TAGGER_BIN, "wb"))
 
 ################################################## GLOBAL VARIABLES ###################################################
 
 basePath = str()
 data = dict()
 words = set()
-invertedIndex = str()
+invertedIndex = dict()
+invertedIndexFileText = str()
 
 
 ######################################################## CODE #########################################################
@@ -94,7 +104,7 @@ def getWordOccurrencesCount(word, wordList):
 
 
 def main():
-    global words, data, invertedIndex
+    global words, data, invertedIndex, invertedIndexFileText
 
     inputFilesPath = getInputFilesPath(sys.argv[1:][0])
 
@@ -123,13 +133,17 @@ def main():
             count = getWordOccurrencesCount(word, data.get(fileId)["words"])
 
             if count > 0:
-                occurrences.append("{},{}".format(fileId, count))
+                occurrences.append((fileId, count))
 
-        invertedIndex = invertedIndex + "{}: {}\n".format(word, " ".join(occurrences))
+        invertedIndex.update({
+            word: occurrences
+        })
+
+        invertedIndexFileText = invertedIndexFileText + "{}: {}\n".format(word, " ".join([str(occ[0]) + "," + str(occ[1]) for occ in occurrences]))
 
     print("Writing final file...")
     finalFile = open(FINAL_FILE_PATH, "w")
-    finalFile.write(invertedIndex)
+    finalFile.write(invertedIndexFileText)
 
     print("Done!")
 
