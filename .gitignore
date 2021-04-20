@@ -139,6 +139,6 @@ cython_debug/
 
 # Custom
 indice.txt
-resultado.txt
+resposta.txt
 tagger.bin
 waxm_etiquetador.bin
