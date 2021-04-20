@@ -139,4 +139,5 @@ cython_debug/
 
 # Custom
 indice.txt
+resultado.txt
 tagger.bin
