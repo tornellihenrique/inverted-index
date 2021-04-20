@@ -141,3 +141,4 @@ cython_debug/
 indice.txt
 resultado.txt
 tagger.bin
+waxm_etiquetador.bin
