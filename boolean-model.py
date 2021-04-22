@@ -62,6 +62,7 @@ data = dict()
 words = set()
 invertedIndex = dict()
 invertedIndexFileText = str()
+booleanModel = dict()
 query = list()
 
 
@@ -81,24 +82,6 @@ def getInputFilesPath(baseFilePath):
         return ["{}{}{}".format(basePath, SLASH, inputFile.replace(NEW_LINE, "")) for inputFile in baseFile.readlines()
                 if
                 inputFile != NEW_LINE]
-
-
-def getQuery(queryFilePath):
-    query = list()
-
-    try:
-        queryFileText = open(queryFilePath, "r").read()
-        for term in queryFileText.split(OR_CHAR):
-            subTerms = list()
-            for subTerm in term.split(AND_CHAR):
-                subTerms.append(subTerm.strip().lower())
-            query.append(subTerms)
-
-        return query
-    except:
-        print("Error processing query!")
-
-        return None
 
 
 def getFilePathWords(inputFilePath):
@@ -126,8 +109,39 @@ def getWordOccurrencesCount(word, wordList):
     return count
 
 
+def getQuery(queryFilePath):
+    query = list()
+
+    try:
+        queryFileText = open(queryFilePath, "r").read()
+        for term in queryFileText.split(OR_CHAR):
+            subTerms = list()
+            for subTerm in term.split(AND_CHAR):
+                subTerms.append(NEG_CHAR + STEMMER.stem(subTerm.strip().lower()[1:]) if subTerm.find(NEG_CHAR) != -1 else STEMMER.stem(subTerm.strip().lower()))
+            query.append(subTerms)
+
+        return query
+    except:
+        print("Error processing query!")
+
+        return None
+
+
+def generateBooleanModel(query, invertedIndex):
+    booleanModel = dict()
+
+    for term in query:
+        for subTerm in term:
+            handledTerm = subTerm.replace(NEG_CHAR, "")
+            booleanModel.update({
+                handledTerm: [index[0] for index in invertedIndex.get(handledTerm) or []]
+            })
+
+    return booleanModel
+
+
 def main():
-    global words, data, invertedIndex, invertedIndexFileText, query
+    global words, data, invertedIndex, invertedIndexFileText, query, booleanModel
 
     inputFilesPath = getInputFilesPath(sys.argv[1:][0])
 
@@ -178,14 +192,16 @@ def main():
 
     print("Processing search...")
 
+    booleanModel = generateBooleanModel(query, invertedIndex)
+
     matchedFileIds = set()
     for term in query:
         tempFileIds = set(data.keys())
         for subTerm in term:
             if subTerm.find(NEG_CHAR) == -1:
-                foundFileIds = [index[0] for index in invertedIndex.get(STEMMER.stem(subTerm)) or []]
+                foundFileIds = [fileId for fileId in booleanModel.get(subTerm) or []]
             else:
-                foundFileIds = [fileId for fileId in list(data.keys()) if fileId not in [index[0] for index in invertedIndex.get(STEMMER.stem(subTerm[1:])) or []]]
+                foundFileIds = [fileId for fileId in list(data.keys()) if fileId not in [fileId for fileId in booleanModel.get(subTerm[1:]) or []]]
             if len(foundFileIds) > 0:
                 tempFileIds = tempFileIds.intersection(set(foundFileIds))
         matchedFileIds.update(tempFileIds)
